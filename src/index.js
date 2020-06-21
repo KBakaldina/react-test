@@ -51,13 +51,22 @@ class Game extends React.Component {
         squares: Array(9).fill(null),
       }],
       xIsNext: true,
+      stepNumber: 0,
     }
   }
 
-  handleClick(i) {
-    const { history, xIsNext } = this.state;
+  jumpTo(step) {
+    this.setState({
+      stepNumber: step,
+      xIsNext: (step % 2) === 0, 
+    });
+  }
 
-    const current = getCurrentFromHistory(history);
+  handleClick(i) {
+    const { history: oldHistory, xIsNext, stepNumber } = this.state;
+
+    const history = oldHistory.slice(0, stepNumber + 1)
+    const current = getCurrentFromHistory(history, stepNumber);
     const squares = current.squares.slice();
 
     if (calculateWinner(squares) || squares[i]) { return; }
@@ -66,18 +75,31 @@ class Game extends React.Component {
 
     this.setState({
       history: history.concat([{ squares }]),
+      stepNumber: history.length,
       xIsNext: !xIsNext,
     });
   }
   
   render() {
-    const { history, xIsNext } = this.state;
+    const { history, xIsNext, stepNumber } = this.state;
 
-    const current = getCurrentFromHistory(history);
+    const current = getCurrentFromHistory(history, stepNumber);
     const winner = calculateWinner(current.squares);
     const status = winner
       ? 'Winner: ' + winner
       : 'Next player: ' + getNextPlayer(xIsNext);
+
+    const moves = history.map((_, move) => {
+      const desc = move
+        ? 'Go to move #' + move
+        : 'Go to game start';
+      
+      return (
+        <li key={move}>
+          <button onClick={() => this.jumpTo(move)}>{desc}</button>
+        </li>
+      );
+    });
 
     return (
       <div className="game">
@@ -89,7 +111,7 @@ class Game extends React.Component {
         </div>
       <div className="game-info">
         <div>{status}</div>
-          <ol>{/* TODO */}</ol>
+          <ol>{moves}</ol>
         </div>
       </div>
     );
@@ -126,8 +148,8 @@ function getNextPlayer(xIsNext) {
   return xIsNext ? 'X' : 'O';
 }
 
-function getCurrentFromHistory(history) {
-  return history[history.length - 1];
+function getCurrentFromHistory(history, stepNumber) {
+  return history[stepNumber];
 }
 
 ReactDOM.render(
