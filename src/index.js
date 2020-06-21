@@ -89,9 +89,19 @@ class Game extends React.Component {
       ? 'Winner: ' + winner
       : 'Next player: ' + getNextPlayer(xIsNext);
 
-    const moves = history.map((_, move) => {
+    const moves = history.map((step, move) => {
+      let indexOfLastMove;
+      if (move) {
+        const prevSquares = history[move - 1].squares.slice();
+        const curSquares = step.squares.slice();
+        indexOfLastMove = getIndexOfNewMove(prevSquares, curSquares);
+      }
+
       const desc = move
-        ? 'Go to move #' + move
+        ? `Go to move #${move} (
+          col=${indexOfLastMove % 3 + 1},
+          row=${Math.floor(indexOfLastMove / 3 + 1)}
+          )`
         : 'Go to game start';
       
       return (
@@ -150,6 +160,15 @@ function getNextPlayer(xIsNext) {
 
 function getCurrentFromHistory(history, stepNumber) {
   return history[stepNumber];
+}
+
+function getIndexOfNewMove(prevSquares, curSquares) {
+  for (let i = 0; i < prevSquares.length; i++) {
+    if (prevSquares[i] !== curSquares[i]) {
+      return i;
+    }
+  }
+  return null;
 }
 
 ReactDOM.render(
